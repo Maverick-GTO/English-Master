@@ -102,8 +102,8 @@
 
     <div id="home" class="screen">
         <h1>English Master</h1>
-        <button class="btn-primary" onclick="showScreen('lektionWaehlen')">1. Lektion wählen</button>
-        <button class="btn-outline" onclick="showScreen('lektionErfassen')">2. Lektion erfassen</button>
+        <button class="btn-primary" onclick="showScreen('lektionWaehlen')">Lektion wählen</button>
+        <button class="btn-outline" onclick="showScreen('lektionErfassen')">Lektion erfassen</button>
         <button class="btn-outline" onclick="showScreen('lektionenVerwalten')">Vokabeln korrigieren</button>
     </div>
 
@@ -161,7 +161,6 @@
     </div>
 
     <script>
-        // Datenbank aus LocalStorage laden
         let lessons = JSON.parse(localStorage.getItem('english_master_db')) || [];
         let currentLesson = null;
         let currentWords = [];
@@ -348,7 +347,6 @@
             }
         }
 
-        // Service Worker Registrierung für PWA
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
         }
