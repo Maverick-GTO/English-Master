@@ -49,7 +49,6 @@
         h1 { font-size: 26px; text-align: center; color: var(--primary); margin-bottom: 24px; font-weight: 300; }
         h2 { font-size: 18px; color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
 
-        /* Pill-Buttons ohne Nummern */
         button {
             width: 100%; padding: 14px; margin: 6px 0;
             border-radius: 100px; border: none;
@@ -69,12 +68,10 @@
 
         .hidden { display: none !important; }
 
-        /* Eingabebereich Erfassung */
         .word-row {
-            background: #252525; padding: 12px; border-radius: 16px; margin-bottom: 12px;
-            border: 1px solid #333;
+            background: #252525; padding: 12px; border-radius: 16px; margin-bottom: 12px; border: 1px solid #333;
         }
-        .word-row-inputs { display: flex; gap: 8px; }
+        .word-row-inputs { display: flex; gap: 8px; margin-bottom: 8px; }
 
         .lektion-card {
             background: #252525; padding: 16px; border-radius: 16px;
@@ -87,10 +84,9 @@
             padding: 10px 0; border-bottom: 1px solid var(--border);
         }
 
-        /* Quiz UI */
         .game-card { text-align: center; padding: 20px 10px; }
         .prompt { font-size: 32px; margin-bottom: 20px; font-weight: bold; color: white; }
-        .missing-word { font-size: 34px; letter-spacing: 6px; color: var(--primary); font-family: 'Courier New', monospace; margin-bottom: 20px; }
+        .missing-word { font-size: 34px; letter-spacing: 6px; color: var(--primary); font-family: monospace; margin-bottom: 20px; }
         .feedback { margin-top: 20px; font-weight: bold; min-height: 24px; font-size: 18px; }
         
         #successScreen { text-align: center; padding: 50px 20px; }
@@ -111,12 +107,10 @@
     <div id="lektionErfassen" class="screen hidden">
         <h2>Neue Lektion</h2>
         <input type="date" id="lekDatum">
-        <input type="text" id="lekThema" placeholder="Thema (z.B. My Body)">
+        <input type="text" id="lekThema" placeholder="Thema (z.B. My Family)">
         <input type="text" id="lekSeite" placeholder="Buchseite">
-        
-        <div id="wordInputs"><h3>Wörter hinzufügen</h3></div>
-        
-        <button class="btn-outline" onclick="addWordField()">+ Weiteres Wort</button>
+        <div id="wordInputs"><h3>Wörter</h3></div>
+        <button class="btn-outline" onclick="addWordField()">+ Wort hinzufügen</button>
         <button class="btn-primary" onclick="saveLektion()" style="margin-top: 20px;">Lektion speichern</button>
         <button class="btn-outline" onclick="showScreen('home')">Abbrechen</button>
     </div>
@@ -141,7 +135,7 @@
             <div class="prompt" id="gamePrompt"></div>
             <div id="missingDisplay" class="missing-word hidden"></div>
             <p id="gameHint" style="color:var(--text-sub); font-style: italic; margin-bottom: 20px;"></p>
-            <input type="text" id="gameInput" placeholder="Antwort hier..." autocomplete="off" onkeydown="if(event.key==='Enter') checkAnswer()">
+            <input type="text" id="gameInput" placeholder="Antwort..." autocomplete="off" onkeydown="if(event.key==='Enter') checkAnswer()">
             <button class="btn-primary" onclick="checkAnswer()">Prüfen</button>
             <div id="feedback" class="feedback"></div>
         </div>
@@ -151,7 +145,7 @@
     <div id="successScreen" class="screen hidden">
         <div class="stars">🌟🌟🌟</div>
         <h2>Super gemacht!</h2>
-        <p>Du hast alle Wörter der Lektion richtig gelöst. Du bist ein Englisch-Profi!</p>
+        <p>Du hast alles richtig gelöst!</p>
         <button class="btn-primary" onclick="showScreen('home')">Weiter lernen</button>
     </div>
 
@@ -162,13 +156,8 @@
     </div>
 
     <script>
-        // Datenbank initialisieren
-        let lessons = JSON.parse(localStorage.getItem('english_master_db_v3')) || [];
-        let currentLesson = null;
-        let currentWords = [];
-        let currentWordIndex = 0;
-        let currentMode = '';
-        let missingOriginal = '';
+        let lessons = JSON.parse(localStorage.getItem('english_master_db_v4')) || [];
+        let currentLesson, currentWords, currentWordIndex, currentMode, missingOriginal;
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -191,14 +180,10 @@
                     <input type="text" class="deIn" placeholder="Deutsch">
                 </div>
                 <select class="typeIn">
-                    <option value="Nomen">Nomen</option>
-                    <option value="Verb">Verb</option>
-                    <option value="Adjektiv">Adjektiv</option>
-                    <option value="Adverb">Adverb</option>
-                    <option value="Pronomen">Pronomen</option>
-                    <option value="Präposition">Präposition</option>
-                    <option value="Konjunktion">Konjunktion</option>
-                    <option value="Zahlwort">Zahlwort</option>
+                    <option value="Nomen">Nomen</option><option value="Verb">Verb</option>
+                    <option value="Adjektiv">Adjektiv</option><option value="Adverb">Adverb</option>
+                    <option value="Pronomen">Pronomen</option><option value="Präposition">Präposition</option>
+                    <option value="Konjunktion">Konjunktion</option><option value="Zahlwort">Zahlwort</option>
                     <option value="Andere">Andere</option>
                 </select>
             `;
@@ -208,7 +193,6 @@
         function saveLektion() {
             const thema = document.getElementById('lekThema').value.trim();
             if(!thema) return alert("Thema fehlt!");
-            
             const wordRows = document.querySelectorAll('.word-row');
             let words = [];
             wordRows.forEach(row => {
@@ -217,119 +201,70 @@
                 const type = row.querySelector('.typeIn').value;
                 if(en && de) words.push({ en, de, type });
             });
-
-            if(words.length === 0) return alert("Mindestens ein Wort eingeben!");
-
-            lessons.unshift({
-                id: Date.now(),
-                datum: document.getElementById('lekDatum').value,
-                thema: thema,
-                seite: document.getElementById('lekSeite').value,
-                words: words
-            });
-            sync();
-            showScreen('home');
+            if(words.length === 0) return alert("Wörter eingeben!");
+            lessons.unshift({ id: Date.now(), datum: document.getElementById('lekDatum').value, thema, seite: document.getElementById('lekSeite').value, words });
+            sync(); showScreen('home');
         }
 
         function renderLektionen() {
             const container = document.getElementById('lektionListe');
-            if(lessons.length === 0) { container.innerHTML = "<p style='text-align:center; color:gray;'>Noch keine Übungen erfasst.</p>"; return; }
             container.innerHTML = lessons.map(l => `
                 <div class="lektion-card" onclick="selectLektion(${l.id})">
-                    <strong>${l.thema}</strong><br>
-                    <small>${l.datum} • Seite ${l.seite} • ${l.words.length} Wörter</small>
-                </div>`).join('');
+                    <strong>${l.thema}</strong><br><small>${l.datum} • Seite ${l.seite} • ${l.words.length} Wörter</small>
+                </div>`).join('') || "<p>Noch keine Übungen.</p>";
         }
 
         function renderManage() {
-            const container = document.getElementById('manageListe');
-            if(lessons.length === 0) { container.innerHTML = "<p style='text-align:center;'>Nichts zum Korrigieren.</p>"; return; }
-            container.innerHTML = lessons.map((l, lIdx) => `
+            document.getElementById('manageListe').innerHTML = lessons.map((l, lIdx) => `
                 <div class="lektion-card" style="cursor:default">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
                         <strong>${l.thema}</strong>
-                        <button class="btn-danger" onclick="deleteLek(${lIdx})">Lektion löschen</button>
+                        <button class="btn-danger" onclick="deleteLek(${lIdx})">Löschen</button>
                     </div>
-                    <div>
+                    <div style="margin-top:10px">
                         ${l.words.map((w, wIdx) => `
                             <div class="manage-word-item">
-                                <span>${w.en} - ${w.de} <br><small style="color:var(--text-sub)">(${w.type})</small></span>
+                                <span>${w.en} - ${w.de}</span>
                                 <div>
                                     <button class="btn-edit" onclick="editWord(${lIdx}, ${wIdx})">Edit</button>
                                     <button class="btn-danger" onclick="deleteWord(${lIdx}, ${wIdx})">X</button>
                                 </div>
                             </div>`).join('')}
                     </div>
-                </div>`).join('');
+                </div>`).join('') || "<p>Nichts zum Bearbeiten.</p>";
         }
 
-        function deleteLek(idx) { if(confirm("Ganze Lektion wirklich löschen?")) { lessons.splice(idx, 1); sync(); renderManage(); } }
-
-        function deleteWord(lIdx, wIdx) {
-            if(confirm("Wort löschen?")) {
-                lessons[lIdx].words.splice(wIdx, 1);
-                sync(); renderManage();
-            }
-        }
-
+        function deleteLek(idx) { if(confirm("Löschen?")) { lessons.splice(idx, 1); sync(); renderManage(); } }
+        function deleteWord(lIdx, wIdx) { if(confirm("Wort weg?")) { lessons[lIdx].words.splice(wIdx, 1); sync(); renderManage(); } }
         function editWord(lIdx, wIdx) {
             const w = lessons[lIdx].words[wIdx];
-            const newEn = prompt("Englisch korrigieren:", w.en);
-            const newDe = prompt("Deutsch korrigieren:", w.de);
-            if(newEn !== null && newDe !== null) {
-                lessons[lIdx].words[wIdx].en = newEn.trim();
-                lessons[lIdx].words[wIdx].de = newDe.trim();
-                sync(); renderManage();
-            }
+            const nE = prompt("Englisch:", w.en), nD = prompt("Deutsch:", w.de);
+            if(nE && nD) { lessons[lIdx].words[wIdx].en = nE; lessons[lIdx].words[wIdx].de = nD; sync(); renderManage(); }
         }
 
-        function sync() { localStorage.setItem('english_master_db_v3', JSON.stringify(lessons)); }
-
-        function selectLektion(id) {
-            currentLesson = lessons.find(l => l.id === id);
-            document.getElementById('selectedLekTitle').innerText = currentLesson.thema;
-            showScreen('modusWaehlen');
-        }
+        function sync() { localStorage.setItem('english_master_db_v4', JSON.stringify(lessons)); }
+        function selectLektion(id) { currentLesson = lessons.find(l => l.id === id); document.getElementById('selectedLekTitle').innerText = currentLesson.thema; showScreen('modusWaehlen'); }
 
         function startGame(mode) {
-            currentMode = mode;
-            currentWords = [...currentLesson.words].sort(() => 0.5 - Math.random());
-            currentWordIndex = 0;
-            showScreen('gameScreen');
-            nextWord();
+            currentMode = mode; currentWords = [...currentLesson.words].sort(() => 0.5 - Math.random());
+            currentWordIndex = 0; showScreen('gameScreen'); nextWord();
         }
 
         function nextWord() {
-            if(currentWordIndex >= currentWords.length) {
-                showScreen('successScreen');
-                return;
-            }
+            if(currentWordIndex >= currentWords.length) { showScreen('successScreen'); return; }
             const word = currentWords[currentWordIndex];
             const input = document.getElementById('gameInput');
             const missingDisplay = document.getElementById('missingDisplay');
-            document.getElementById('feedback').innerText = '';
-            document.getElementById('gameHint').innerText = '';
-            input.value = ''; input.classList.remove('hidden');
-            missingDisplay.classList.add('hidden');
-
-            if(currentMode === 'en-de') {
-                document.getElementById('gameTypeLabel').innerText = "Auf Deutsch?";
-                document.getElementById('gamePrompt').innerText = word.en;
-            } else if(currentMode === 'de-en') {
-                document.getElementById('gameTypeLabel').innerText = "Auf Englisch?";
-                document.getElementById('gamePrompt').innerText = word.de;
-            } else {
-                document.getElementById('gameTypeLabel').innerText = "Buchstaben ergänzen:";
-                missingDisplay.classList.remove('hidden');
-                document.getElementById('gamePrompt').innerText = '';
-                document.getElementById('gameHint').innerText = "Hinweis: " + word.de;
-                
+            document.getElementById('feedback').innerText = ''; input.value = '';
+            input.classList.remove('hidden'); missingDisplay.classList.add('hidden');
+            if(currentMode === 'en-de') { document.getElementById('gameTypeLabel').innerText = "Deutsch?"; document.getElementById('gamePrompt').innerText = word.en; }
+            else if(currentMode === 'de-en') { document.getElementById('gameTypeLabel').innerText = "English?"; document.getElementById('gamePrompt').innerText = word.de; }
+            else {
+                document.getElementById('gameTypeLabel').innerText = "Vervollständige:";
+                missingDisplay.classList.remove('hidden'); document.getElementById('gamePrompt').innerText = '';
+                document.getElementById('gameHint').innerText = "Deutsch: " + word.de;
                 missingOriginal = word.en;
-                let str = word.en;
-                let indices = [];
-                let count = str.length > 5 ? 3 : 2;
-                if(str.length <= 2) count = 1;
-
+                let str = word.en, indices = [], count = str.length > 5 ? 3 : 2;
                 while(indices.length < count) {
                     let r = Math.floor(Math.random() * str.length);
                     if(!indices.includes(r) && str[r] !== ' ') indices.push(r);
@@ -342,30 +277,20 @@
         function checkAnswer() {
             const word = currentWords[currentWordIndex];
             const userIn = document.getElementById('gameInput').value.trim().toLowerCase();
-            const feedback = document.getElementById('feedback');
-            let isCorrect = false;
-
-            if(currentMode === 'en-de') isCorrect = (userIn === word.de.toLowerCase());
-            else if(currentMode === 'de-en') isCorrect = (userIn === word.en.toLowerCase());
-            else isCorrect = (userIn === missingOriginal.toLowerCase());
-
-            if(isCorrect) {
-                feedback.innerText = "Richtig! 🌟";
-                feedback.style.color = "var(--correct)";
-                setTimeout(() => { currentWordIndex++; nextWord(); }, 1200);
+            const correct = (currentMode === 'missing' ? missingOriginal : (currentMode === 'en-de' ? word.de : word.en)).toLowerCase();
+            if(userIn === correct) {
+                document.getElementById('feedback').innerText = "Richtig! 🌟";
+                document.getElementById('feedback').style.color = "var(--correct)";
+                setTimeout(() => { currentWordIndex++; nextWord(); }, 1000);
             } else {
-                feedback.innerText = "Nicht ganz. Probier es nochmal!";
-                feedback.style.color = "var(--danger)";
-                document.getElementById('gameInput').select();
+                document.getElementById('feedback').innerText = "Falsch!";
+                document.getElementById('feedback').style.color = "var(--danger)";
             }
         }
 
-        // Service Worker Registrierung verbessert für Chrome/Android
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker aktiv', reg))
-                .catch(err => console.log('SW Fehler', err));
+                navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW ok')).catch(err => console.log('SW fail'));
             });
         }
     </script>
