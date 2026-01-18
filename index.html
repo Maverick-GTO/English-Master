@@ -71,9 +71,10 @@
         .hidden { display: none !important; }
 
         .word-row {
-            display: flex; gap: 8px; background: #252525;
-            padding: 10px; border-radius: 12px; margin-bottom: 8px; align-items: center;
+            display: flex; flex-direction: column; gap: 4px; background: #252525;
+            padding: 12px; border-radius: 16px; margin-bottom: 12px;
         }
+        .word-row-inputs { display: flex; gap: 8px; }
 
         .lektion-card {
             background: #252525; padding: 16px; border-radius: 16px;
@@ -86,7 +87,6 @@
             padding: 10px 0; border-bottom: 1px solid var(--border);
         }
 
-        /* Quiz & Success */
         .game-card { text-align: center; padding: 20px 10px; }
         .prompt { font-size: 32px; margin-bottom: 20px; font-weight: bold; color: white; }
         .missing-word { font-size: 34px; letter-spacing: 6px; color: var(--primary); font-family: 'Courier New', monospace; margin-bottom: 20px; }
@@ -110,7 +110,7 @@
     <div id="lektionErfassen" class="screen hidden">
         <h2>Neue Lektion</h2>
         <input type="date" id="lekDatum">
-        <input type="text" id="lekThema" placeholder="Thema (z.B. My Family)">
+        <input type="text" id="lekThema" placeholder="Thema (z.B. My Travels)">
         <input type="text" id="lekSeite" placeholder="Buchseite">
         
         <div id="wordInputs"><h3>Wörter hinzufügen</h3></div>
@@ -150,7 +150,7 @@
     <div id="successScreen" class="screen hidden">
         <div class="stars">🌟🌟🌟</div>
         <h2>Super gemacht!</h2>
-        <p>Du hast alle Wörter der Lektion richtig gelöst. Du bist ein Profi!</p>
+        <p>Du hast alle Wörter der Lektion richtig gelöst!</p>
         <button class="btn-primary" onclick="showScreen('home')">Weiter lernen</button>
     </div>
 
@@ -184,12 +184,20 @@
             const div = document.createElement('div');
             div.className = 'word-row';
             div.innerHTML = `
-                <input type="text" class="enIn" placeholder="English">
-                <input type="text" class="deIn" placeholder="Deutsch">
-                <select class="typeIn" style="width:85px">
+                <div class="word-row-inputs">
+                    <input type="text" class="enIn" placeholder="English">
+                    <input type="text" class="deIn" placeholder="Deutsch">
+                </div>
+                <select class="typeIn">
                     <option value="Nomen">Nomen</option>
                     <option value="Verb">Verb</option>
-                    <option value="Adj.">Adj.</option>
+                    <option value="Adjektiv">Adjektiv</option>
+                    <option value="Adverb">Adverb</option>
+                    <option value="Pronomen">Pronomen</option>
+                    <option value="Präposition">Präposition</option>
+                    <option value="Konjunktion">Konjunktion</option>
+                    <option value="Zahlwort">Zahlwort</option>
+                    <option value="Andere">Andere</option>
                 </select>
             `;
             document.getElementById('wordInputs').appendChild(div);
@@ -220,7 +228,7 @@
 
         function renderLektionen() {
             const container = document.getElementById('lektionListe');
-            if(lessons.length === 0) { container.innerHTML = "<p style='text-align:center; color:gray;'>Noch keine Lektionen erfasst.</p>"; return; }
+            if(lessons.length === 0) { container.innerHTML = "<p style='text-align:center; color:gray;'>Keine Lektionen vorhanden.</p>"; return; }
             container.innerHTML = lessons.map(l => `
                 <div class="lektion-card" onclick="selectLektion(${l.id})">
                     <strong>${l.thema}</strong><br>
@@ -240,7 +248,7 @@
                     <div>
                         ${l.words.map((w, wIdx) => `
                             <div class="manage-word-item">
-                                <span>${w.en} - ${w.de}</span>
+                                <span>${w.en} - ${w.de} <small style="color:var(--text-sub)">(${w.type})</small></span>
                                 <div>
                                     <button class="btn-edit" onclick="editWord(${lIdx}, ${wIdx})">Edit</button>
                                     <button class="btn-danger" onclick="deleteWord(${lIdx}, ${wIdx})">X</button>
@@ -250,7 +258,7 @@
                 </div>`).join('');
         }
 
-        function deleteLek(idx) { if(confirm("Ganze Lektion wirklich löschen?")) { lessons.splice(idx, 1); sync(); renderManage(); } }
+        function deleteLek(idx) { if(confirm("Lektion löschen?")) { lessons.splice(idx, 1); sync(); renderManage(); } }
 
         function deleteWord(lIdx, wIdx) {
             if(confirm("Wort löschen?")) {
@@ -261,8 +269,8 @@
 
         function editWord(lIdx, wIdx) {
             const w = lessons[lIdx].words[wIdx];
-            const newEn = prompt("Englisch korrigieren:", w.en);
-            const newDe = prompt("Deutsch korrigieren:", w.de);
+            const newEn = prompt("Englisch:", w.en);
+            const newDe = prompt("Deutsch:", w.de);
             if(newEn !== null && newDe !== null) {
                 lessons[lIdx].words[wIdx].en = newEn.trim();
                 lessons[lIdx].words[wIdx].de = newDe.trim();
@@ -300,13 +308,13 @@
             missingDisplay.classList.add('hidden');
 
             if(currentMode === 'en-de') {
-                document.getElementById('gameTypeLabel').innerText = "Was heisst das auf Deutsch?";
+                document.getElementById('gameTypeLabel').innerText = "Deutsch?";
                 document.getElementById('gamePrompt').innerText = word.en;
             } else if(currentMode === 'de-en') {
-                document.getElementById('gameTypeLabel').innerText = "Was heisst das auf Englisch?";
+                document.getElementById('gameTypeLabel').innerText = "English?";
                 document.getElementById('gamePrompt').innerText = word.de;
             } else {
-                document.getElementById('gameTypeLabel').innerText = "Vervollständige das Wort:";
+                document.getElementById('gameTypeLabel').innerText = "Fehlende Buchstaben:";
                 missingDisplay.classList.remove('hidden');
                 document.getElementById('gamePrompt').innerText = '';
                 document.getElementById('gameHint').innerText = "Deutsch: " + word.de;
@@ -341,7 +349,7 @@
                 feedback.style.color = "var(--correct)";
                 setTimeout(() => { currentWordIndex++; nextWord(); }, 1200);
             } else {
-                feedback.innerText = "Noch nicht ganz. Probier es nochmal!";
+                feedback.innerText = "Nicht ganz richtig.";
                 feedback.style.color = "var(--danger)";
                 document.getElementById('gameInput').select();
             }
