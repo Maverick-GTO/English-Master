@@ -68,9 +68,7 @@
 
         .hidden { display: none !important; }
 
-        .word-row {
-            background: #252525; padding: 12px; border-radius: 16px; margin-bottom: 12px; border: 1px solid #333;
-        }
+        .word-row { background: #252525; padding: 12px; border-radius: 16px; margin-bottom: 12px; border: 1px solid #333; }
         .word-row-inputs { display: flex; gap: 8px; margin-bottom: 8px; }
 
         .lektion-card {
@@ -107,8 +105,8 @@
     <div id="lektionErfassen" class="screen hidden">
         <h2>Neue Lektion</h2>
         <input type="date" id="lekDatum">
-        <input type="text" id="lekThema" placeholder="Thema (z.B. My Family)">
-        <input type="text" id="lekSeite" placeholder="Buchseite">
+        <input type="text" id="lekThema" placeholder="Thema">
+        <input type="text" id="lekSeite" placeholder="Seite">
         <div id="wordInputs"><h3>Wörter</h3></div>
         <button class="btn-outline" onclick="addWordField()">+ Wort hinzufügen</button>
         <button class="btn-primary" onclick="saveLektion()" style="margin-top: 20px;">Lektion speichern</button>
@@ -125,12 +123,12 @@
         <h2 id="selectedLekTitle">Lektion</h2>
         <button class="btn-primary" onclick="startGame('en-de')">Englisch ➔ Deutsch</button>
         <button class="btn-primary" onclick="startGame('de-en')">Deutsch ➔ Englisch</button>
-        <button class="btn-primary" onclick="startGame('missing')">Fehlende Buchstaben</button>
+        <button class="btn-primary" onclick="startGame('missing')">Buchstaben ergänzen</button>
         <button class="btn-outline" onclick="showScreen('lektionWaehlen')">Zurück</button>
     </div>
 
     <div id="gameScreen" class="screen hidden">
-        <div id="gameContent" class="game-card">
+        <div class="game-card">
             <p id="gameTypeLabel" style="color:var(--text-sub); font-size: 14px;"></p>
             <div class="prompt" id="gamePrompt"></div>
             <div id="missingDisplay" class="missing-word hidden"></div>
@@ -156,14 +154,14 @@
     </div>
 
     <script>
-        let lessons = JSON.parse(localStorage.getItem('english_master_db_v4')) || [];
-        let currentLesson, currentWords, currentWordIndex, currentMode, missingOriginal;
+        let lessons = JSON.parse(localStorage.getItem('english_master_db_v5')) || [];
+        let curLek, curWords, curIdx, curMode, missOrig;
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
-            if(id === 'lektionWaehlen') renderLektionen();
-            if(id === 'lektionenVerwalten') renderManage();
+            if(id === 'lektionWaehlen') renderLek();
+            if(id === 'lektionenVerwalten') renderMan();
             if(id === 'lektionErfassen') {
                 document.getElementById('lekDatum').valueAsDate = new Date();
                 document.getElementById('wordInputs').innerHTML = '<h3>Wörter</h3>';
@@ -192,105 +190,95 @@
 
         function saveLektion() {
             const thema = document.getElementById('lekThema').value.trim();
-            if(!thema) return alert("Thema fehlt!");
-            const wordRows = document.querySelectorAll('.word-row');
+            if(!thema) return alert("Thema angeben!");
+            const rows = document.querySelectorAll('.word-row');
             let words = [];
-            wordRows.forEach(row => {
-                const en = row.querySelector('.enIn').value.trim();
-                const de = row.querySelector('.deIn').value.trim();
-                const type = row.querySelector('.typeIn').value;
-                if(en && de) words.push({ en, de, type });
+            rows.forEach(r => {
+                const en = r.querySelector('.enIn').value.trim(), de = r.querySelector('.deIn').value.trim(), ty = r.querySelector('.typeIn').value;
+                if(en && de) words.push({ en, de, type: ty });
             });
             if(words.length === 0) return alert("Wörter eingeben!");
             lessons.unshift({ id: Date.now(), datum: document.getElementById('lekDatum').value, thema, seite: document.getElementById('lekSeite').value, words });
             sync(); showScreen('home');
         }
 
-        function renderLektionen() {
-            const container = document.getElementById('lektionListe');
-            container.innerHTML = lessons.map(l => `
-                <div class="lektion-card" onclick="selectLektion(${l.id})">
-                    <strong>${l.thema}</strong><br><small>${l.datum} • Seite ${l.seite} • ${l.words.length} Wörter</small>
-                </div>`).join('') || "<p>Noch keine Übungen.</p>";
+        function renderLek() {
+            document.getElementById('lektionListe').innerHTML = lessons.map(l => `<div class="lektion-card" onclick="selLek(${l.id})"><strong>${l.thema}</strong><br><small>${l.datum} • ${l.words.length} Wörter</small></div>`).join('') || "<p>Keine Lektionen.</p>";
         }
 
-        function renderManage() {
-            document.getElementById('manageListe').innerHTML = lessons.map((l, lIdx) => `
-                <div class="lektion-card" style="cursor:default">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong>${l.thema}</strong>
-                        <button class="btn-danger" onclick="deleteLek(${lIdx})">Löschen</button>
-                    </div>
-                    <div style="margin-top:10px">
-                        ${l.words.map((w, wIdx) => `
-                            <div class="manage-word-item">
-                                <span>${w.en} - ${w.de}</span>
-                                <div>
-                                    <button class="btn-edit" onclick="editWord(${lIdx}, ${wIdx})">Edit</button>
-                                    <button class="btn-danger" onclick="deleteWord(${lIdx}, ${wIdx})">X</button>
-                                </div>
-                            </div>`).join('')}
-                    </div>
-                </div>`).join('') || "<p>Nichts zum Bearbeiten.</p>";
+        function renderMan() {
+            document.getElementById('manageListe').innerHTML = lessons.map((l, lI) => `<div class="lektion-card" style="cursor:default">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${l.thema}</strong>
+                    <button class="btn-danger" onclick="delLek(${lI})">Löschen</button>
+                </div>
+                <div style="margin-top:10px">
+                    ${l.words.map((w, wI) => `
+                        <div class="manage-word-item">
+                            <span>${w.en} - ${w.de}</span>
+                            <div>
+                                <button class="btn-edit" onclick="edW(${lI},${wI})">Edit</button>
+                                <button class="btn-danger" onclick="delW(${lI},${wI})">X</button>
+                            </div>
+                        </div>`).join('')}
+                </div>
+            </div>`).join('') || "<p>Nichts da.</p>";
         }
 
-        function deleteLek(idx) { if(confirm("Löschen?")) { lessons.splice(idx, 1); sync(); renderManage(); } }
-        function deleteWord(lIdx, wIdx) { if(confirm("Wort weg?")) { lessons[lIdx].words.splice(wIdx, 1); sync(); renderManage(); } }
-        function editWord(lIdx, wIdx) {
-            const w = lessons[lIdx].words[wIdx];
-            const nE = prompt("Englisch:", w.en), nD = prompt("Deutsch:", w.de);
-            if(nE && nD) { lessons[lIdx].words[wIdx].en = nE; lessons[lIdx].words[wIdx].de = nD; sync(); renderManage(); }
+        function delLek(i) { if(confirm("Lektion löschen?")) { lessons.splice(i, 1); sync(); renderMan(); } }
+        function delW(lI, wI) { if(confirm("Wort entfernen?")) { lessons[lI].words.splice(wI, 1); sync(); renderMan(); } }
+        function edW(lI, wI) {
+            const w = lessons[lI].words[wI], nE = prompt("Englisch:", w.en), nD = prompt("Deutsch:", w.de);
+            if(nE && nD) { lessons[lI].words[wI].en = nE; lessons[lI].words[wI].de = nD; sync(); renderMan(); }
         }
 
-        function sync() { localStorage.setItem('english_master_db_v4', JSON.stringify(lessons)); }
-        function selectLektion(id) { currentLesson = lessons.find(l => l.id === id); document.getElementById('selectedLekTitle').innerText = currentLesson.thema; showScreen('modusWaehlen'); }
+        function sync() { localStorage.setItem('english_master_db_v5', JSON.stringify(lessons)); }
+        function selLek(id) { curLek = lessons.find(l => l.id === id); document.getElementById('selectedLekTitle').innerText = curLek.thema; showScreen('modusWaehlen'); }
 
-        function startGame(mode) {
-            currentMode = mode; currentWords = [...currentLesson.words].sort(() => 0.5 - Math.random());
-            currentWordIndex = 0; showScreen('gameScreen'); nextWord();
+        function startGame(m) {
+            curMode = m; curWords = [...curLek.words].sort(() => 0.5 - Math.random());
+            curIdx = 0; showScreen('gameScreen'); nextW();
         }
 
-        function nextWord() {
-            if(currentWordIndex >= currentWords.length) { showScreen('successScreen'); return; }
-            const word = currentWords[currentWordIndex];
-            const input = document.getElementById('gameInput');
-            const missingDisplay = document.getElementById('missingDisplay');
-            document.getElementById('feedback').innerText = ''; input.value = '';
-            input.classList.remove('hidden'); missingDisplay.classList.add('hidden');
-            if(currentMode === 'en-de') { document.getElementById('gameTypeLabel').innerText = "Deutsch?"; document.getElementById('gamePrompt').innerText = word.en; }
-            else if(currentMode === 'de-en') { document.getElementById('gameTypeLabel').innerText = "English?"; document.getElementById('gamePrompt').innerText = word.de; }
+        function nextW() {
+            if(curIdx >= curWords.length) { showScreen('successScreen'); return; }
+            const w = curWords[curIdx]; const inp = document.getElementById('gameInput'); const mis = document.getElementById('missingDisplay');
+            document.getElementById('feedback').innerText = ''; inp.value = '';
+            inp.classList.remove('hidden'); mis.classList.add('hidden');
+            if(curMode === 'en-de') { document.getElementById('gameTypeLabel').innerText = "Was heisst das auf Deutsch?"; document.getElementById('gamePrompt').innerText = w.en; }
+            else if(curMode === 'de-en') { document.getElementById('gameTypeLabel').innerText = "Was heisst das auf Englisch?"; document.getElementById('gamePrompt').innerText = w.de; }
             else {
-                document.getElementById('gameTypeLabel').innerText = "Vervollständige:";
-                missingDisplay.classList.remove('hidden'); document.getElementById('gamePrompt').innerText = '';
-                document.getElementById('gameHint').innerText = "Deutsch: " + word.de;
-                missingOriginal = word.en;
-                let str = word.en, indices = [], count = str.length > 5 ? 3 : 2;
-                while(indices.length < count) {
-                    let r = Math.floor(Math.random() * str.length);
-                    if(!indices.includes(r) && str[r] !== ' ') indices.push(r);
-                }
-                missingDisplay.innerText = str.split('').map((c, i) => indices.includes(i) ? '_' : c).join('');
+                document.getElementById('gameTypeLabel').innerText = "Buchstaben ergänzen:";
+                mis.classList.remove('hidden'); document.getElementById('gamePrompt').innerText = '';
+                document.getElementById('gameHint').innerText = "Deutsch: " + w.de; missOrig = w.en;
+                let str = w.en, idxs = [], cnt = str.length > 5 ? 3 : 2;
+                if(str.length <= 2) cnt = 1;
+                while(idxs.length < cnt) { let r = Math.floor(Math.random()*str.length); if(!idxs.includes(r) && str[r]!==' ') idxs.push(r); }
+                mis.innerText = str.split('').map((c, i) => idxs.includes(i) ? '_' : c).join('');
             }
-            setTimeout(() => input.focus(), 150);
+            setTimeout(() => inp.focus(), 150);
         }
 
         function checkAnswer() {
-            const word = currentWords[currentWordIndex];
-            const userIn = document.getElementById('gameInput').value.trim().toLowerCase();
-            const correct = (currentMode === 'missing' ? missingOriginal : (currentMode === 'en-de' ? word.de : word.en)).toLowerCase();
-            if(userIn === correct) {
-                document.getElementById('feedback').innerText = "Richtig! 🌟";
-                document.getElementById('feedback').style.color = "var(--correct)";
-                setTimeout(() => { currentWordIndex++; nextWord(); }, 1000);
+            const w = curWords[curIdx], val = document.getElementById('gameInput').value.trim().toLowerCase();
+            const cor = (curMode === 'missing' ? missOrig : (curMode === 'en-de' ? w.de : w.en)).toLowerCase();
+            if(val === cor) {
+                document.getElementById('feedback').innerText = "Richtig! 🌟"; document.getElementById('feedback').style.color = "var(--correct)";
+                setTimeout(() => { curIdx++; nextW(); }, 1200);
             } else {
-                document.getElementById('feedback').innerText = "Falsch!";
-                document.getElementById('feedback').style.color = "var(--danger)";
+                document.getElementById('feedback').innerText = "Versuchs nochmal!"; document.getElementById('feedback').style.color = "var(--danger)";
+                document.getElementById('gameInput').select();
             }
         }
 
+        // PWA Service Worker Registrierung
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW ok')).catch(err => console.log('SW fail'));
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    console.log('PWA aktiv', reg);
+                }).catch(err => {
+                    console.log('PWA Fehler', err);
+                });
             });
         }
     </script>
