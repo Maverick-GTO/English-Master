@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>English Master Pro</title>
+    <title>English Master Pro v2</title>
     
     <link rel="icon" type="image/png" href="https://img.icons8.com/m_rounded/512/FFFFFF/alphabet.png">
     <meta name="theme-color" content="#121212">
@@ -48,58 +48,47 @@
         h2 { font-size: 18px; color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
 
         button {
-            width: 100%;
-            padding: 14px;
-            margin: 6px 0;
-            border-radius: 100px;
-            border: none;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: transform 0.1s;
+            width: 100%; padding: 14px; margin: 6px 0;
+            border-radius: 100px; border: none;
+            font-size: 16px; font-weight: 500;
+            cursor: pointer; transition: transform 0.1s;
         }
 
         .btn-primary { background-color: var(--primary); color: var(--on-primary); }
         .btn-outline { background-color: transparent; border: 1px solid var(--text-sub); color: var(--text-main); }
-        .btn-danger { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 8px; font-size: 12px; }
+        .btn-danger { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 6px 12px; font-size: 12px; width: auto; }
+        .btn-edit { background: none; border: 1px solid var(--primary); color: var(--primary); padding: 6px 12px; font-size: 12px; width: auto; }
 
         input, select {
-            width: 100%;
-            background: #2C2C2C;
-            border: 1px solid #444;
-            border-radius: 12px;
-            padding: 12px;
-            color: white;
-            margin-bottom: 12px;
-            font-size: 16px;
+            width: 100%; background: #2C2C2C; border: 1px solid #444;
+            border-radius: 12px; padding: 12px; color: white; margin-bottom: 12px; font-size: 16px;
         }
 
         .hidden { display: none !important; }
 
-        /* Wort-Eintrag Styling */
         .word-row {
-            display: flex;
-            gap: 8px;
-            background: #252525;
-            padding: 10px;
-            border-radius: 12px;
-            margin-bottom: 8px;
-            align-items: center;
+            display: flex; gap: 8px; background: #252525;
+            padding: 10px; border-radius: 12px; margin-bottom: 8px; align-items: center;
         }
 
         .lektion-card {
-            background: #252525;
-            padding: 16px;
-            border-radius: 16px;
-            margin-bottom: 12px;
-            border-left: 4px solid var(--primary);
+            background: #252525; padding: 16px; border-radius: 16px;
+            margin-bottom: 12px; border-left: 4px solid var(--primary);
         }
 
-        /* Game UI */
-        .game-card { text-align: center; padding: 40px 10px; }
+        .manage-word-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #333;
+        }
+
+        /* Game & Success UI */
+        .game-card { text-align: center; padding: 20px 10px; }
         .prompt { font-size: 28px; margin-bottom: 20px; font-weight: bold; }
         .missing-word { font-size: 32px; letter-spacing: 4px; color: var(--primary); font-family: monospace; }
-        .feedback { margin-top: 20px; font-weight: bold; }
+        .feedback { margin-top: 20px; font-weight: bold; min-height: 24px; }
+        
+        #successScreen { text-align: center; }
+        .stars { font-size: 50px; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -116,20 +105,7 @@
         <input type="date" id="lekDatum">
         <input type="text" id="lekThema" placeholder="Thema (z.B. At School)">
         <input type="text" id="lekSeite" placeholder="Buchseite">
-        
-        <div id="wordInputs">
-            <h3>Wörter hinzufügen</h3>
-            <div class="word-entry">
-                <input type="text" class="enIn" placeholder="English">
-                <input type="text" class="deIn" placeholder="Deutsch">
-                <select class="typeIn">
-                    <option value="Nomen">Nomen</option>
-                    <option value="Verb">Verb</option>
-                    <option value="Adjektiv">Adjektiv</option>
-                    <option value="Andere">Andere</option>
-                </select>
-            </div>
-        </div>
+        <div id="wordInputs"><h3>Wörter</h3></div>
         <button class="btn-outline" onclick="addWordField()">+ Weiteres Wort</button>
         <button class="btn-primary" onclick="saveLektion()">Lektion speichern</button>
         <button class="btn-outline" onclick="showScreen('home')">Abbrechen</button>
@@ -152,14 +128,21 @@
     <div id="gameScreen" class="screen hidden">
         <div id="gameContent" class="game-card">
             <p id="gameTypeLabel" style="color:var(--text-sub)"></p>
-            <div class="prompt" id="gamePrompt">Frage?</div>
+            <div class="prompt" id="gamePrompt"></div>
             <div id="missingDisplay" class="missing-word hidden"></div>
             <p id="gameHint" style="color:var(--text-sub)"></p>
-            <input type="text" id="gameInput" placeholder="Antwort hier..." autocomplete="off">
+            <input type="text" id="gameInput" placeholder="Antwort hier..." autocomplete="off" onkeydown="if(event.key==='Enter') checkAnswer()">
             <button class="btn-primary" onclick="checkAnswer()">Prüfen</button>
             <div id="feedback" class="feedback"></div>
         </div>
         <button class="btn-outline" onclick="showScreen('modusWaehlen')">Spiel beenden</button>
+    </div>
+
+    <div id="successScreen" class="screen hidden">
+        <div class="stars">🌟🌟🌟</div>
+        <h2>Gratulation!</h2>
+        <p>Du hast alle Wörter dieser Lektion perfekt gelöst!</p>
+        <button class="btn-primary" onclick="showScreen('home')">Zurück zur Startseite</button>
     </div>
 
     <div id="lektionenVerwalten" class="screen hidden">
@@ -169,7 +152,7 @@
     </div>
 
     <script>
-        let lessons = JSON.parse(localStorage.getItem('english_lessons')) || [];
+        let lessons = JSON.parse(localStorage.getItem('english_lessons_v2')) || [];
         let currentLesson = null;
         let currentWords = [];
         let currentWordIndex = 0;
@@ -192,11 +175,9 @@
             const div = document.createElement('div');
             div.className = 'word-row';
             div.innerHTML = `
-                <input type="text" class="enIn" placeholder="EN" style="margin:0">
-                <input type="text" class="deIn" placeholder="DE" style="margin:0">
-                <select class="typeIn" style="margin:0; width:80px">
-                    <option value="N">N</option><option value="V">V</option><option value="A">A</option>
-                </select>
+                <input type="text" class="enIn" placeholder="EN">
+                <input type="text" class="deIn" placeholder="DE">
+                <select class="typeIn" style="width:80px"><option value="N">N</option><option value="V">V</option><option value="A">A</option></select>
             `;
             document.getElementById('wordInputs').appendChild(div);
         }
@@ -204,59 +185,65 @@
         function saveLektion() {
             const thema = document.getElementById('lekThema').value;
             if(!thema) return alert("Thema angeben!");
-            
-            const wordDivs = document.querySelectorAll('.word-row');
-            let words = [];
-            wordDivs.forEach(div => {
-                const en = div.querySelector('.enIn').value.trim();
-                const de = div.querySelector('.deIn').value.trim();
-                const type = div.querySelector('.typeIn').value;
-                if(en && de) words.push({ en, de, type });
-            });
+            const words = Array.from(document.querySelectorAll('.word-row')).map(div => ({
+                en: div.querySelector('.enIn').value.trim(),
+                de: div.querySelector('.deIn').value.trim(),
+                type: div.querySelector('.typeIn').value
+            })).filter(w => w.en && w.de);
 
-            const newLek = {
-                id: Date.now(),
-                datum: document.getElementById('lekDatum').value,
-                thema: thema,
-                seite: document.getElementById('lekSeite').value,
-                words: words
-            };
-
-            lessons.unshift(newLek);
-            localStorage.setItem('english_lessons', JSON.stringify(lessons));
+            lessons.unshift({ id: Date.now(), datum: document.getElementById('lekDatum').value, thema, seite: document.getElementById('lekSeite').value, words });
+            localStorage.setItem('english_lessons_v2', JSON.stringify(lessons));
             showScreen('home');
         }
 
         function renderLektionen() {
-            const container = document.getElementById('lektionListe');
-            container.innerHTML = lessons.map(l => `
+            document.getElementById('lektionListe').innerHTML = lessons.map(l => `
                 <div class="lektion-card" onclick="selectLektion(${l.id})">
-                    <strong>${l.thema}</strong><br>
-                    <small>${l.datum} • Seite ${l.seite} • ${l.words.length} Wörter</small>
-                </div>
-            `).join('');
+                    <strong>${l.thema}</strong><br><small>${l.datum} • Seite ${l.seite} • ${l.words.length} Wörter</small>
+                </div>`).join('');
         }
 
         function renderManage() {
-            const container = document.getElementById('manageListe');
-            container.innerHTML = lessons.map((l, idx) => `
+            document.getElementById('manageListe').innerHTML = lessons.map((l, lIdx) => `
                 <div class="lektion-card">
-                    <strong>${l.thema}</strong>
-                    <button class="btn-danger" style="width:auto; float:right" onclick="deleteLek(${idx})">Löschen</button>
-                    <div style="clear:both; padding-top:10px;">
-                        ${l.words.map(w => `<small>${w.en} = ${w.de} (${w.type})</small>`).join('<br>')}
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                        <strong>${l.thema}</strong>
+                        <button class="btn-danger" onclick="deleteLek(${lIdx})">Lektion löschen</button>
                     </div>
-                </div>
-            `).join('');
+                    <div style="margin-top:10px">
+                        ${l.words.map((w, wIdx) => `
+                            <div class="manage-word-item">
+                                <span>${w.en} = ${w.de}</span>
+                                <div>
+                                    <button class="btn-edit" onclick="editWord(${lIdx}, ${wIdx})">Edit</button>
+                                    <button class="btn-danger" onclick="deleteWord(${lIdx}, ${wIdx})">X</button>
+                                </div>
+                            </div>`).join('')}
+                    </div>
+                </div>`).join('');
         }
 
-        function deleteLek(idx) {
-            if(confirm("Lektion wirklich löschen?")) {
-                lessons.splice(idx, 1);
-                localStorage.setItem('english_lessons', JSON.stringify(lessons));
-                renderManage();
+        function deleteLek(idx) { if(confirm("Ganze Lektion löschen?")) { lessons.splice(idx, 1); sync(); renderManage(); } }
+
+        function deleteWord(lIdx, wIdx) {
+            if(confirm("Wort löschen?")) {
+                lessons[lIdx].words.splice(wIdx, 1);
+                sync(); renderManage();
             }
         }
+
+        function editWord(lIdx, wIdx) {
+            const w = lessons[lIdx].words[wIdx];
+            const newEn = prompt("English:", w.en);
+            const newDe = prompt("Deutsch:", w.de);
+            if(newEn && newDe) {
+                lessons[lIdx].words[wIdx].en = newEn;
+                lessons[lIdx].words[wIdx].de = newDe;
+                sync(); renderManage();
+            }
+        }
+
+        function sync() { localStorage.setItem('english_lessons_v2', JSON.stringify(lessons)); }
 
         function selectLektion(id) {
             currentLesson = lessons.find(l => l.id === id);
@@ -274,45 +261,38 @@
 
         function nextWord() {
             if(currentWordIndex >= currentWords.length) {
-                alert("Super! Alles geschafft.");
-                showScreen('modusWaehlen');
+                showScreen('successScreen');
                 return;
             }
             const word = currentWords[currentWordIndex];
-            const feedback = document.getElementById('feedback');
             const input = document.getElementById('gameInput');
             const missingDisplay = document.getElementById('missingDisplay');
-            feedback.innerText = '';
-            input.value = '';
-            input.classList.remove('hidden');
+            document.getElementById('feedback').innerText = '';
+            input.value = ''; input.classList.remove('hidden');
             missingDisplay.classList.add('hidden');
 
             if(currentMode === 'en-de') {
-                document.getElementById('gameTypeLabel').innerText = "Was heisst auf Deutsch?";
+                document.getElementById('gameTypeLabel').innerText = "Deutsch?";
                 document.getElementById('gamePrompt').innerText = word.en;
-                document.getElementById('gameHint').innerText = `(${word.type})`;
             } else if(currentMode === 'de-en') {
-                document.getElementById('gameTypeLabel').innerText = "Was heisst auf Englisch?";
+                document.getElementById('gameTypeLabel').innerText = "English?";
                 document.getElementById('gamePrompt').innerText = word.de;
-                document.getElementById('gameHint').innerText = `(${word.type})`;
-            } else if(currentMode === 'missing') {
-                document.getElementById('gameTypeLabel').innerText = "Fülle die Buchstaben aus:";
+            } else {
+                document.getElementById('gameTypeLabel').innerText = "Fehlende Buchstaben:";
                 missingDisplay.classList.remove('hidden');
-                document.getElementById('gameHint').innerText = `Deutsch: ${word.de}`;
-                
-                let str = word.en;
                 missingOriginal = word.en;
+                let str = word.en;
                 let indices = [];
-                // 2-3 Buchstaben verstecken
                 let count = str.length > 4 ? 3 : 2;
                 while(indices.length < count) {
                     let r = Math.floor(Math.random() * str.length);
                     if(!indices.includes(r) && str[r] !== ' ') indices.push(r);
                 }
-                let display = str.split('').map((char, i) => indices.includes(i) ? '_' : char).join('');
-                document.getElementById('gamePrompt').innerText = ''; 
-                missingDisplay.innerText = display;
+                missingDisplay.innerText = str.split('').map((c, i) => indices.includes(i) ? '_' : c).join('');
+                document.getElementById('gamePrompt').innerText = '';
+                document.getElementById('gameHint').innerText = `Hinweis: ${word.de}`;
             }
+            input.focus();
         }
 
         function checkAnswer() {
@@ -323,18 +303,13 @@
 
             if(currentMode === 'en-de') correct = (userIn === word.de.toLowerCase());
             else if(currentMode === 'de-en') correct = (userIn === word.en.toLowerCase());
-            else if(currentMode === 'missing') correct = (userIn === missingOriginal.toLowerCase());
+            else correct = (userIn === missingOriginal.toLowerCase());
 
             if(correct) {
-                feedback.innerText = "Richtig! 🌟";
-                feedback.style.color = "var(--correct)";
-                setTimeout(() => {
-                    currentWordIndex++;
-                    nextWord();
-                }, 1000);
+                feedback.innerText = "Richtig! 🌟"; feedback.style.color = "var(--correct)";
+                setTimeout(() => { currentWordIndex++; nextWord(); }, 1000);
             } else {
-                feedback.innerText = "Leider falsch. Versuchs nochmal!";
-                feedback.style.color = "var(--danger)";
+                feedback.innerText = "Falsch. Versuchs nochmal!"; feedback.style.color = "var(--danger)";
             }
         }
     </script>
