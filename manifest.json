@@ -1,10 +1,8 @@
 {
   "name": "English Master Pro",
   "short_name": "English",
-  "description": "Vokabeltrainer für Kinder",
-  "id": "english-master-app",
+  "id": "./",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
@@ -12,8 +10,7 @@
     {
       "src": "https://img.icons8.com/ios-filled/192/ffffff/abc-block.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "https://img.icons8.com/ios-filled/512/ffffff/abc-block.png",
