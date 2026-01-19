@@ -4,69 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>English Master Pro</title>
-    
     <link rel="icon" type="image/png" href="https://img.icons8.com/ios-filled/512/ffffff/abc-block.png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/ios-filled/512/ffffff/abc-block.png">
     <meta name="theme-color" content="#121212">
     <link rel="manifest" href="manifest.json">
-
     <style>
-        :root {
-            --bg-color: #121212; --surface: #1E1E1E; --primary: #8AB4F8; 
-            --on-primary: #003063; --text-main: #E2E2E2; --text-sub: #909090;
-            --danger: #F28B82; --correct: #81C995; --border: #333333;
-        }
+        :root { --bg-color: #121212; --surface: #1E1E1E; --primary: #8AB4F8; --on-primary: #003063; --text-main: #E2E2E2; --text-sub: #909090; --danger: #F28B82; --correct: #81C995; --border: #333333; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Roboto', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; min-height: 100vh; }
         .screen { background: var(--surface); padding: 24px; border-radius: 28px; max-width: 500px; margin: 10px auto; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
         h1 { font-size: 26px; text-align: center; color: var(--primary); margin-bottom: 24px; font-weight: 300; }
         h2 { font-size: 18px; color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-        button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 100px; border: none; font-size: 16px; font-weight: 500; cursor: pointer; }
+        button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 100px; border: none; font-size: 16px; font-weight: 500; cursor: pointer; transition: transform 0.1s; }
         .btn-primary { background-color: var(--primary); color: var(--on-primary); }
         .btn-outline { background-color: transparent; border: 1px solid var(--text-sub); color: var(--text-main); }
         .btn-danger { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 6px 12px; font-size: 12px; width: auto; }
         .btn-edit { background: none; border: 1px solid var(--primary); color: var(--primary); padding: 6px 12px; font-size: 12px; width: auto; }
         input, select { width: 100%; background: #2C2C2C; border: 1px solid #444; border-radius: 12px; padding: 12px; color: white; margin-bottom: 12px; font-size: 16px; outline: none; }
         .hidden { display: none !important; }
-        .word-row { background: #252525; padding: 12px; border-radius: 16px; margin-bottom: 12px; border: 1px solid #333; }
-        .word-row-inputs { display: flex; gap: 8px; margin-bottom: 8px; }
         .lektion-card { background: #252525; padding: 16px; border-radius: 16px; margin-bottom: 12px; border-left: 4px solid var(--primary); cursor: pointer; }
-        .manage-word-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
         .game-card { text-align: center; padding: 20px 10px; }
         .prompt { font-size: 32px; margin-bottom: 20px; font-weight: bold; }
-        .missing-word { font-size: 34px; letter-spacing: 6px; color: var(--primary); font-family: monospace; }
         .feedback { margin-top: 20px; font-weight: bold; min-height: 24px; font-size: 18px; }
-        #successScreen { text-align: center; padding: 50px 20px; }
-        .stars { font-size: 60px; margin: 20px 0; animation: bounce 1s infinite alternate; }
-        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
     </style>
 </head>
 <body>
-
     <div id="home" class="screen">
         <h1>English Master</h1>
         <button class="btn-primary" onclick="showScreen('lektionWaehlen')">Lektion wählen</button>
         <button class="btn-outline" onclick="showScreen('lektionErfassen')">Lektion erfassen</button>
         <button class="btn-outline" onclick="showScreen('lektionenVerwalten')">Vokabeln korrigieren</button>
+        <button class="btn-outline" onclick="exportData()" style="margin-top:20px; font-size:12px;">Daten sichern</button>
+    </div>
+
+    <div id="lektionWaehlen" class="screen hidden">
+        <h2>Übung auswählen</h2>
+        <div id="lektionListe"></div>
+        <button class="btn-outline" onclick="showScreen('home')">Zurück</button>
     </div>
 
     <script>
-        let lessons = JSON.parse(localStorage.getItem('english_master_db_v6')) || [];
-        // ... (Alle Funktionen wie saveLektion, renderLektionen, startGame etc. hier einfügen)
-        
-        // Navigation Logik
+        let lessons = JSON.parse(localStorage.getItem('english_master_db_v10')) || [];
+
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             const target = document.getElementById(id);
             if(target) target.classList.remove('hidden');
+            if(id === 'lektionWaehlen') renderLektionen();
         }
 
-        // Service Worker Registrierung
+        function renderLektionen() {
+            const container = document.getElementById('lektionListe');
+            container.innerHTML = lessons.map(l => `<div class="lektion-card"><strong>${l.thema}</strong></div>`).join('') || "Keine Lektionen.";
+        }
+
+        function exportData() {
+            const data = JSON.stringify(lessons);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'vokabel_backup.json'; a.click();
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('PWA Service Worker registriert'))
-                .catch(err => console.log('PWA Fehler', err));
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                .then(reg => console.log('PWA aktiv', reg.scope))
+                .catch(err => console.log('Fehler', err));
             });
         }
     </script>
