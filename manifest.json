@@ -1,8 +1,10 @@
 {
   "name": "English Master Pro",
   "short_name": "English",
-  "id": "./",
+  "description": "Vokabeltrainer für Kinder",
+  "id": "/English-Master/",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
