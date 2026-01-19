@@ -2,7 +2,7 @@
   "name": "English Master Pro",
   "short_name": "English",
   "description": "Vokabeltrainer für Kinder",
-  "id": "/english-master-pro/",
+  "id": "english-master-app",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
